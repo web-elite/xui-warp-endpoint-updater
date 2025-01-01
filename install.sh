@@ -100,6 +100,7 @@ chmod +x "$SCRIPT_PATH" "$MAIN_SCRIPT_PATH" || {
 
 # Get the cron interval from the user
 clear
+welcome
 get_cron_interval
 
 # Add cron job to run the script at the user-defined interval
