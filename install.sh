@@ -83,6 +83,7 @@ log "Making the scripts executable..." "$YELLOW"
 chmod +x "$SCRIPT_PATH" "$MAIN_SCRIPT_PATH" || { log "Error: Failed to make the scripts executable." "$RED"; exit 1; }
 
 # Get the cron interval from the user
+clear
 get_cron_interval
 
 # Add cron job to run the script at the user-defined interval
