@@ -17,14 +17,12 @@ NC='\033[0m' # No Color
 log() {
   local message="$1"
   local color="$2"
-  local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-
-  echo -e "${color}$timestamp $message${NC}"
+  echo -e "${color}$message${NC}"
 }
 
 # Function to prompt user for the cron job interval
 get_cron_interval() {
-  log "Please choose how often you want to run the script:" "$YELLOW"
+  log "Please choose how often you want to run the script:" "$RED"
   log "1) Every 6 hours" "$YELLOW"
   log "2) Every 12 hours" "$YELLOW"
   log "3) Every 24 hours" "$YELLOW"
@@ -89,11 +87,11 @@ get_cron_interval
 
 # Add cron job to run the script at the user-defined interval
 log "Setting up cron job to run the script at your selected interval..." "$YELLOW"
-(crontab -l 2>/dev/null; echo "$cron_interval $SCRIPT_PATH") | crontab - || { log "Error: Failed to set up the cron job." "$RED"; exit 1; }
+(crontab -l 2>/dev/null; echo "$cron_interval $MAIN_SCRIPT_PATH") | crontab - || { log "Error: Failed to set up the cron job." "$RED"; exit 1; }
 
 # Verify the cron job is added
 log "Verifying cron job..." "$YELLOW"
-if crontab -l | grep -q "$SCRIPT_PATH"; then
+if crontab -l | grep -q "$MAIN_SCRIPT_PATH"; then
   log "Cron job successfully added to run the script at the selected interval." "$GREEN"
 else
   log "Error: Cron job not added successfully." "$RED"
