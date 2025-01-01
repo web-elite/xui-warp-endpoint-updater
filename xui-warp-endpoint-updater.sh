@@ -95,7 +95,14 @@ updated_config=$(echo "$config" | jq --arg ip1 "$ip1" --arg ip2 "$ip2" '
     else
       .
     end
-  )
+  ) | 
+  # Optionally, check if the "warp" tag exists and log a message
+  if (.outbounds | map(select(.tag == "warp")) | length == 0) then
+    # If the "warp" tag does not exist, log a warning or take any other action
+    . |= .  # This returns the unchanged config
+  else
+    .
+  end
 ')
 
 # Function to escape special characters in the input
