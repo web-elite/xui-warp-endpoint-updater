@@ -3,6 +3,7 @@
 LOG_FILE="/var/log/x-ui-update.log"
 IP_FINDER="./find-best-ip-endpoint.sh"
 DB_PATH="/etc/x-ui/x-ui.db"
+INSTALL_DIR="/root/x-ui-warp-endpoint-updater"
 
 log() {
   local message="$1"
@@ -60,13 +61,14 @@ if [ ! -f "$DB_PATH" ]; then
   exit 1
 fi
 
-if [ ! -f "./result.csv" ]; then
+if [ ! -f "$INSTALL_DIR/result.csv" ]; then
   log "result.csv not found!"
   exit 1
 fi
 
-ip1=$(awk -F, 'NR==2 {print $1}' ./result.csv)
-ip2=$(awk -F, 'NR==3 {print $1}' ./result.csv)
+ip1=$(awk -F, 'NR==2 {print $1}' "$INSTALL_DIR/result.csv")
+ip2=$(awk -F, 'NR==3 {print $1}' "$INSTALL_DIR/result.csv")
+
 log "Extracted IP1: $ip1"
 log "Extracted IP2: $ip2"
 
