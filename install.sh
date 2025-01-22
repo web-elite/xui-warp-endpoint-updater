@@ -28,6 +28,8 @@ welcome() {
     log ""
     log "Thanks Ptech From https://github.com/Ptechgithub/warp"
     log "Script By Me https://github.com/Web-Elite"
+    log "========================================="
+    log "This Script needs sqlite3, jq, curl, and cron ... so let's get started with installation."
 }
 
 # Function to prompt user for the cron job interval
@@ -66,7 +68,7 @@ get_cron_interval() {
 
 # Update system and install required packages
 log "Updating system and installing required packages..." "$YELLOW"
-if ! apt-get update -y || ! apt-get install -y curl cron; then
+if ! apt-get update -y || ! apt-get install -y curl cron sqlite3 jq; then
     log "Error: Failed to install required packages." "$RED"
     exit 1
 fi
