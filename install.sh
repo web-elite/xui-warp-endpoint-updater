@@ -21,61 +21,57 @@ log() {
     echo -e "${color}$message${NC}"
 }
 
-welcome() {
-    log "This script will automatically find the best Warp endpoint IP and place it in your x-ui panel and finally restart the xray core."
-    log "After the script has been run, you can choose how many hours it will automatically run and update the Warp endpoint IP."
-    log "This script will not interfere with your existing Warp settings."
-    log "Please make sure you have a backup of your Warp settings before running this script."
-    log ""
-    log "Thanks Ptech From https://github.com/Ptechgithub/warp"
-    log "Script By Me https://github.com/Web-Elite"
-    log "========================================="
-    log "This Script needs sqlite3, jq, curl, and cron ... so let's get started with installation."
-}
+log "This script will automatically find the best Warp endpoint IP and place it in your x-ui panel and finally restart the xray core."
+log "After the script has been run, you can choose how many hours it will automatically run and update the Warp endpoint IP."
+log "This script will not interfere with your existing Warp settings."
+log "Please make sure you have a backup of your Warp settings before running this script."
+log ""
+log "Thanks Ptech From https://github.com/Ptechgithub/warp"
+log "Script By Me https://github.com/Web-Elite"
+log "========================================="
+log "This Script needs sqlite3, jq, curl, and cron ... so let's get started with installation."
 
 # Prompt user for multiple Warp outbound names (comma-separated)
 read -p "Enter the outbound names for Warp (comma-separated, e.g., warp1,warp2,warp3): " warp_outbounds
-warp_outbounds=$(echo "$warp_outbounds" | sed 's/ //g')  # Remove spaces
+warp_outbounds=$(echo "$warp_outbounds" | sed 's/ //g') # Remove spaces
 
 # Save the outbound names in the config file
 mkdir -p "$INSTALL_DIR"
-echo "WARP_OUTBOUNDS=$warp_outbounds" > "$CONFIG_FILE"
+echo "WARP_OUTBOUNDS=$warp_outbounds" >"$CONFIG_FILE"
 
 log "Saved outbound names: $warp_outbounds" "$GREEN"
 
 # Function to prompt user for the cron job interval
-get_cron_interval() {
-    log "Please choose how often you want to run the script:" "$RED"
-    log "1) Every 6 hours" "$YELLOW"
-    log "2) Every 12 hours" "$YELLOW"
-    log "3) Every 24 hours" "$YELLOW"
-    log "4) Custom (Enter custom interval)" "$YELLOW"
+log "Please choose how often you want to run the script:" "$RED"
+log "1) Every 6 hours" "$YELLOW"
+log "2) Every 12 hours" "$YELLOW"
+log "3) Every 24 hours" "$YELLOW"
+log "4) Custom (Enter custom interval)" "$YELLOW"
 
-    read -p "Enter the number corresponding to your choice: " choice
+read -p "Enter the number corresponding to your choice: " choice
 
-    case $choice in
-    1)
-        cron_interval="0 */6 * * *"
-        log "You selected to run the script every 6 hours." "$GREEN"
-        ;;
-    2)
-        cron_interval="0 */12 * * *"
-        log "You selected to run the script every 12 hours." "$GREEN"
-        ;;
-    3)
-        cron_interval="0 */24 * * *"
-        log "You selected to run the script every 24 hours." "$GREEN"
-        ;;
-    4)
-        read -p "Enter the custom cron interval (e.g., 0 */4 * * * for every 4 hours): " cron_interval
-        log "You selected a custom cron interval: $cron_interval" "$GREEN"
-        ;;
-    *)
-        log "Invalid choice. Defaulting to every 6 hours." "$RED"
-        cron_interval="0 */6 * * *"
-        ;;
-    esac
-}
+case $choice in
+1)
+    cron_interval="0 */6 * * *"
+    log "You selected to run the script every 6 hours." "$GREEN"
+    ;;
+2)
+    cron_interval="0 */12 * * *"
+    log "You selected to run the script every 12 hours." "$GREEN"
+    ;;
+3)
+    cron_interval="0 */24 * * *"
+    log "You selected to run the script every 24 hours." "$GREEN"
+    ;;
+4)
+    read -p "Enter the custom cron interval (e.g., 0 */4 * * * for every 4 hours): " cron_interval
+    log "You selected a custom cron interval: $cron_interval" "$GREEN"
+    ;;
+*)
+    log "Invalid choice. Defaulting to every 6 hours." "$RED"
+    cron_interval="0 */6 * * *"
+    ;;
+esac
 
 # Proceed with installation (same as before)
 log "Updating system and installing required packages..." "$YELLOW"
