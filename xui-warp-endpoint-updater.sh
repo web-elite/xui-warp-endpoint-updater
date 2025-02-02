@@ -50,7 +50,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
 fi
 
 source "$CONFIG_FILE"
-IFS=',' read -r -a WARP_OUTBOUNDS_ARRAY <<< "$WARP_OUTBOUNDS"
+IFS=',' read -r -a WARP_OUTBOUNDS_ARRAY <<<"$WARP_OUTBOUNDS"
 
 # Extract IPs from result.csv
 IP_LIST=()
@@ -58,7 +58,18 @@ while IFS=',' read -r ip _; do
   IP_LIST+=("$ip")
 done < <(tail -n +2 "$INSTALL_DIR/result.csv")
 
-log "Extracted IPs: ${IP_LIST[*]}"
+# Ensure extracted IP count matches WARP_OUTBOUNDS_ARRAY count
+if [[ ${#IP_LIST[@]} -lt ${#WARP_OUTBOUNDS_ARRAY[@]} ]]; then
+  log "Error: Not enough IPs extracted (${#IP_LIST[@]}) for WARP Outbounds (${#WARP_OUTBOUNDS_ARRAY[@]})."
+  exit 1
+elif [[ ${#IP_LIST[@]} -gt ${#WARP_OUTBOUNDS_ARRAY[@]} ]]; then
+  log "Warning: More IPs extracted than required. Truncating..."
+  IP_LIST=("${IP_LIST[@]:0:${#WARP_OUTBOUNDS_ARRAY[@]}}")
+fi
+
+log "Warp Outbound Tag Names: ${WARP_OUTBOUNDS_ARRAY[*]}"
+# Log the final matched list
+log "Final IPs Assigned: ${IP_LIST[*]} (Count: ${#IP_LIST[@]})"
 
 # Validate IPs
 for ip in "${IP_LIST[@]}"; do
@@ -82,13 +93,20 @@ fi
 
 # Update the configuration with new endpoints
 updated_config=$(echo "$config" | jq --argjson ip_list "$(printf '%s\n' "${IP_LIST[@]}" | jq -R . | jq -s .)" --argjson warp_outbounds "$(printf '%s\n' "${WARP_OUTBOUNDS_ARRAY[@]}" | jq -R . | jq -s .)" '
-  .outbounds |= map(
-    if (.tag | IN($warp_outbounds[])) then
-      .settings.peers[0].endpoint = $ip_list[.tag | index($warp_outbounds[])]
-    else
-      .
-    end
-  )')
+  . as $config |
+  $warp_outbounds as $warp_outbounds |
+  $ip_list as $ip_list |
+  reduce range(0; $warp_outbounds | length) as $i (
+    $config;
+    .outbounds |= map(
+      if .tag == $warp_outbounds[$i] then
+        .settings.peers[0].endpoint = $ip_list[$i]
+      else
+        .
+      end
+    )
+  )
+')
 
 # Escape SQL special characters
 escape_sql() {
