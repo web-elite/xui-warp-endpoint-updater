@@ -4,6 +4,7 @@
 SCRIPT_URL="https://raw.githubusercontent.com/web-elite/xui-warp-endpoint-updater/main/find-best-ip-endpoint.sh"
 MAIN_SCRIPT_URL="https://raw.githubusercontent.com/web-elite/xui-warp-endpoint-updater/main/xui-warp-endpoint-updater.sh"
 INSTALL_DIR="/root/x-ui-warp-endpoint-updater"
+CONFIG_FILE="$INSTALL_DIR/config.conf"
 SCRIPT_PATH="$INSTALL_DIR/find-best-ip-endpoint.sh"
 MAIN_SCRIPT_PATH="$INSTALL_DIR/xui-warp-endpoint-updater.sh"
 
@@ -20,53 +21,17 @@ log() {
     echo -e "${color}$message${NC}"
 }
 
-welcome() {
-    log "This script will automatically find the best Warp endpoint IP and place it in your x-ui panel and finally restart the xray core."
-    log "After the script has been run, you can choose how many hours it will automatically run and update the Warp endpoint IP."
-    log "This script will not interfere with your existing Warp settings."
-    log "Please make sure you have a backup of your Warp settings before running this script."
-    log ""
-    log "Thanks Ptech From https://github.com/Ptechgithub/warp"
-    log "Script By Me https://github.com/Web-Elite"
-    log "========================================="
-    log "This Script needs sqlite3, jq, curl, and cron ... so let's get started with installation."
-}
+# Prompt user for multiple Warp outbound names (comma-separated)
+read -p "Enter the outbound names for Warp (comma-separated, e.g., warp1,warp2,warp3): " warp_outbounds
+warp_outbounds=$(echo "$warp_outbounds" | sed 's/ //g')  # Remove spaces
 
-# Function to prompt user for the cron job interval
-get_cron_interval() {
-    log "Please choose how often you want to run the script:" "$RED"
-    log "1) Every 6 hours" "$YELLOW"
-    log "2) Every 12 hours" "$YELLOW"
-    log "3) Every 24 hours" "$YELLOW"
-    log "4) Custom (Enter custom interval)" "$YELLOW"
+# Save the outbound names in the config file
+mkdir -p "$INSTALL_DIR"
+echo "WARP_OUTBOUNDS=$warp_outbounds" > "$CONFIG_FILE"
 
-    read -p "Enter the number corresponding to your choice: " choice
+log "Saved outbound names: $warp_outbounds" "$GREEN"
 
-    case $choice in
-    1)
-        cron_interval="0 */6 * * *"
-        log "You selected to run the script every 6 hours." "$GREEN"
-        ;;
-    2)
-        cron_interval="0 */12 * * *"
-        log "You selected to run the script every 12 hours." "$GREEN"
-        ;;
-    3)
-        cron_interval="0 */24 * * *"
-        log "You selected to run the script every 24 hours." "$GREEN"
-        ;;
-    4)
-        read -p "Enter the custom cron interval (e.g., 0 */4 * * * for every 4 hours): " cron_interval
-        log "You selected a custom cron interval: $cron_interval" "$GREEN"
-        ;;
-    *)
-        log "Invalid choice. Defaulting to every 6 hours." "$RED"
-        cron_interval="0 */6 * * *"
-        ;;
-    esac
-}
-
-# Update system and install required packages
+# Proceed with installation (same as before)
 log "Updating system and installing required packages..." "$YELLOW"
 if ! apt-get update -y || ! apt-get install -y curl cron sqlite3 jq; then
     log "Error: Failed to install required packages." "$RED"
@@ -100,36 +65,4 @@ chmod +x "$SCRIPT_PATH" "$MAIN_SCRIPT_PATH" || {
     exit 1
 }
 
-# Get the cron interval from the user
-clear
-welcome
-get_cron_interval
-
-# Add cron job to run the script at the user-defined interval
-log "Setting up cron job to run the script at your selected interval..." "$YELLOW"
-
-# Remove any existing cron jobs for MAIN_SCRIPT_PATH
-crontab -l | grep -v "$MAIN_SCRIPT_PATH" | crontab - || {
-    log "Error: Failed to remove existing cron jobs." "$RED"
-    exit 1
-}
-
-# Add the new cron job with the selected interval
-(
-    crontab -l 2>/dev/null
-    echo "$cron_interval $MAIN_SCRIPT_PATH"
-) | crontab - || {
-    log "Error: Failed to set up the cron job." "$RED"
-    exit 1
-}
-
-# Verify the cron job is added
-log "Verifying cron job..." "$YELLOW"
-if crontab -l | grep -q "$MAIN_SCRIPT_PATH"; then
-    log "Cron job successfully added to run the script at the selected interval." "$GREEN"
-else
-    log "Error: Cron job not added successfully." "$RED"
-    exit 1
-fi
-
-log "Installation complete. The script will now run at the selected interval." "$GREEN"
+log "Installation complete." "$GREEN"
