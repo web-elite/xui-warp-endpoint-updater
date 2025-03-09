@@ -1,11 +1,13 @@
 #!/bin/bash
 
+# Define absolute paths
 LOG_FILE="/var/log/x-ui-update.log"
-IP_FINDER="./find-best-ip-endpoint.sh"
-DB_PATH="/etc/x-ui/x-ui.db"
 INSTALL_DIR="/root/x-ui-warp-endpoint-updater"
+IP_FINDER="$INSTALL_DIR/find-best-ip-endpoint.sh"  # Use absolute path
+DB_PATH="/etc/x-ui/x-ui.db"
 CONFIG_FILE="$INSTALL_DIR/config.conf"
 
+# Log function
 log() {
   local message="$1"
   local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
@@ -30,9 +32,14 @@ if [ ! -f "$IP_FINDER" ]; then
   exit 1
 fi
 
+# Change to the installation directory
+cd "$INSTALL_DIR" || { log "Error: Failed to change to directory $INSTALL_DIR"; exit 1; }
+
+# Make the IP finder script executable and run it
 chmod +x "$IP_FINDER"
 "$IP_FINDER"
 
+# Check if required files exist
 if [ ! -f "$DB_PATH" ]; then
   log "Database file not found: $DB_PATH"
   exit 1
@@ -68,7 +75,6 @@ elif [[ ${#IP_LIST[@]} -gt ${#WARP_OUTBOUNDS_ARRAY[@]} ]]; then
 fi
 
 log "Warp Outbound Tag Names: ${WARP_OUTBOUNDS_ARRAY[*]}"
-# Log the final matched list
 log "Final IPs Assigned: ${IP_LIST[*]} (Count: ${#IP_LIST[@]})"
 
 # Validate IPs
