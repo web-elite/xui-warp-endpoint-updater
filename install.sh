@@ -73,6 +73,9 @@ case $choice in
     ;;
 esac
 
+#add crontab
+(crontab -l 2>/dev/null; echo "$cron_interval $MAIN_SCRIPT_PATH") | crontab -
+
 # Proceed with installation (same as before)
 log "Updating system and installing required packages..." "$YELLOW"
 if ! apt-get update -y || ! apt-get install -y curl cron sqlite3 jq; then
