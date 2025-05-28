@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Define the URLs for your main scripts and the target installation directory
+# Constants
 SCRIPT_URL="https://raw.githubusercontent.com/web-elite/xui-warp-endpoint-updater/main/find-best-ip-endpoint.sh"
 MAIN_SCRIPT_URL="https://raw.githubusercontent.com/web-elite/xui-warp-endpoint-updater/main/xui-warp-endpoint-updater.sh"
 INSTALL_DIR="/root/x-ui-warp-endpoint-updater"
@@ -8,17 +8,88 @@ CONFIG_FILE="$INSTALL_DIR/config.conf"
 SCRIPT_PATH="$INSTALL_DIR/find-best-ip-endpoint.sh"
 MAIN_SCRIPT_PATH="$INSTALL_DIR/xui-warp-endpoint-updater.sh"
 
-# Colors for logging
+# Colors
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 RED='\033[0;31m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-# Function to log messages with color
 log() {
-    local message="$1"
-    local color="$2"
-    echo -e "${color}$message${NC}"
+    echo -e "${2}${1}${NC}"
+}
+
+# Detect and install required packages based on the system
+install_dependencies() {
+    local packages=("curl" "cron" "sqlite3" "jq")
+    log "Checking system and installing required packages..." "$YELLOW"
+
+    if command -v apt >/dev/null; then
+        apt-get update -y
+        apt-get install -y "${packages[@]}"
+    elif command -v dnf >/dev/null; then
+        dnf install -y "${packages[@]}"
+    elif command -v yum >/dev/null; then
+        yum install -y "${packages[@]}"
+    elif command -v pacman >/dev/null; then
+        pacman -Sy --noconfirm "${packages[@]}"
+    else
+        log "Unsupported package manager. Please install these manually: ${packages[*]}" "$RED"
+        exit 1
+    fi
+}
+
+# Remove existing cron job (if any)
+remove_cron_job() {
+    crontab -l 2>/dev/null | grep -v "$MAIN_SCRIPT_PATH" | crontab -
+}
+
+# Add cron job
+add_cron_job() {
+    (crontab -l 2>/dev/null | grep -v "$MAIN_SCRIPT_PATH"; echo "$1 $MAIN_SCRIPT_PATH") | crontab -
+}
+
+install_script() {
+    install_dependencies
+    mkdir -p "$INSTALL_DIR"
+
+    read -p "Enter the outbound names for Warp (comma-separated, e.g., warp1,warp2): " warp_outbounds
+    warp_outbounds=$(echo "$warp_outbounds" | sed 's/ //g')
+    echo "WARP_OUTBOUNDS=$warp_outbounds" >"$CONFIG_FILE"
+    log "Saved outbound names: $warp_outbounds" "$GREEN"
+
+    log "Choose how often the script should run:" "$YELLOW"
+    echo -e "${YELLOW}1) Every 6 hours\n2) Every 12 hours\n3) Every 24 hours\n4) Custom (cron format)${NC}"
+    read -p "Choice: " choice
+
+    case $choice in
+    1) cron_interval="0 */6 * * *" ;;
+    2) cron_interval="0 */12 * * *" ;;
+    3) cron_interval="0 0 * * *" ;; # Every 24 hours at midnight
+    4) read -p "Enter custom cron interval: " cron_interval ;;
+    *) cron_interval="0 */6 * * *"; log "Invalid choice, using default 6h." "$RED" ;;
+    esac
+
+    remove_cron_job
+    add_cron_job "$cron_interval"
+
+    curl -fsSL "$SCRIPT_URL" -o "$SCRIPT_PATH" || { log "Failed to download helper script." "$RED"; exit 1; }
+    curl -fsSL "$MAIN_SCRIPT_URL" -o "$MAIN_SCRIPT_PATH" || { log "Failed to download main script." "$RED"; exit 1; }
+
+    chmod +x "$SCRIPT_PATH" "$MAIN_SCRIPT_PATH"
+    log "Installation complete." "$GREEN"
+}
+
+uninstall_script() {
+    remove_cron_job
+    rm -rf "$INSTALL_DIR"
+    log "Uninstalled successfully." "$GREEN"
+}
+
+update_script() {
+    curl -fsSL "$SCRIPT_URL" -o "$SCRIPT_PATH" || { log "Failed to update helper script." "$RED"; exit 1; }
+    curl -fsSL "$MAIN_SCRIPT_URL" -o "$MAIN_SCRIPT_PATH" || { log "Failed to update main script." "$RED"; exit 1; }
+    chmod +x "$SCRIPT_PATH" "$MAIN_SCRIPT_PATH"
+    log "Update complete." "$GREEN"
 }
 
 log "This script will automatically find the best Warp endpoint IP and place it in your x-ui panel and finally restart the xray core."
@@ -31,83 +102,13 @@ log "Script By Me https://github.com/Web-Elite"
 log "========================================="
 log "This Script needs sqlite3, jq, curl, and cron ... so let's get started with installation."
 
-# Prompt user for multiple Warp outbound names (comma-separated)
-read -p "Enter the outbound names for Warp (comma-separated, e.g., warp1,warp2,warp3): " warp_outbounds
-warp_outbounds=$(echo "$warp_outbounds" | sed 's/ //g') # Remove spaces
+# Menu
+echo -e "${YELLOW}Select an option:\n1) Install\n2) Uninstall\n3) Update Script${NC}"
+read -p "Enter choice: " action
 
-# Save the outbound names in the config file
-mkdir -p "$INSTALL_DIR"
-echo "WARP_OUTBOUNDS=$warp_outbounds" >"$CONFIG_FILE"
-
-log "Saved outbound names: $warp_outbounds" "$GREEN"
-
-# Function to prompt user for the cron job interval
-log "Please choose how often you want to run the script:" "$RED"
-log "1) Every 6 hours" "$YELLOW"
-log "2) Every 12 hours" "$YELLOW"
-log "3) Every 24 hours" "$YELLOW"
-log "4) Custom (Enter custom interval)" "$YELLOW"
-
-read -p "Enter the number corresponding to your choice: " choice
-
-case $choice in
-1)
-    cron_interval="0 */6 * * *"
-    log "You selected to run the script every 6 hours." "$GREEN"
-    ;;
-2)
-    cron_interval="0 */12 * * *"
-    log "You selected to run the script every 12 hours." "$GREEN"
-    ;;
-3)
-    cron_interval="0 */24 * * *"
-    log "You selected to run the script every 24 hours." "$GREEN"
-    ;;
-4)
-    read -p "Enter the custom cron interval (e.g., 0 */4 * * * for every 4 hours): " cron_interval
-    log "You selected a custom cron interval: $cron_interval" "$GREEN"
-    ;;
-*)
-    log "Invalid choice. Defaulting to every 6 hours." "$RED"
-    cron_interval="0 */6 * * *"
-    ;;
+case "$action" in
+1) install_script ;;
+2) uninstall_script ;;
+3) update_script ;;
+*) log "Invalid option." "$RED" ;;
 esac
-
-#add crontab
-(crontab -l 2>/dev/null; echo "$cron_interval $MAIN_SCRIPT_PATH") | crontab -
-
-# Proceed with installation (same as before)
-log "Updating system and installing required packages..." "$YELLOW"
-if ! apt-get update -y || ! apt-get install -y curl cron sqlite3 jq; then
-    log "Error: Failed to install required packages." "$RED"
-    exit 1
-fi
-
-# Create the installation directory
-log "Creating installation directory $INSTALL_DIR..." "$YELLOW"
-mkdir -p "$INSTALL_DIR" || {
-    log "Error: Failed to create directory $INSTALL_DIR." "$RED"
-    exit 1
-}
-
-# Download the scripts
-log "Downloading the find-best-ip-endpoint.sh script..." "$YELLOW"
-if ! curl -fsSL "$SCRIPT_URL" -o "$SCRIPT_PATH"; then
-    log "Error: Failed to download the find-best-ip-endpoint.sh script." "$RED"
-    exit 1
-fi
-
-log "Downloading the xui-warp-endpoint-updater.sh script..." "$YELLOW"
-if ! curl -fsSL "$MAIN_SCRIPT_URL" -o "$MAIN_SCRIPT_PATH"; then
-    log "Error: Failed to download the xui-warp-endpoint-updater.sh script." "$RED"
-    exit 1
-fi
-
-# Make the scripts executable
-log "Making the scripts executable..." "$YELLOW"
-chmod +x "$SCRIPT_PATH" "$MAIN_SCRIPT_PATH" || {
-    log "Error: Failed to make the scripts executable." "$RED"
-    exit 1
-}
-
-log "Installation complete." "$GREEN"
