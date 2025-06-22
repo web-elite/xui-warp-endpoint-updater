@@ -42,14 +42,14 @@
 ### مرحله ۴: تکمیل نصب
 - اسکریپت به طور خودکار:
   - بسته‌های مورد نیاز (`curl`، `cron`، `sqlite3`، `jq`) را نصب می‌کند.
-  - دایرکتوری نصب (`/root/x-ui-warp-endpoint-updater`) را ایجاد می‌کند.
+  - دایرکتوری نصب (`/root/xui-warp-endpoint-updater`) را ایجاد می‌کند.
   - اسکریپت‌های لازم را دانلود می‌کند.
   - اسکریپت‌ها را قابل اجرا می‌کند.
 
 ### مرحله ۵: بررسی نصب
 - دایرکتوری نصب را برای بررسی اسکریپت‌های دانلود شده بررسی کنید:
   ```
-  /root/x-ui-warp-endpoint-updater/
+  /root/xui-warp-endpoint-updater/
   ```
 - بررسی کنید که کرون جاب به درستی تنظیم شده است:
   ```
@@ -59,7 +59,7 @@
 ### مرحله ۶: اجرای دستی اسکریپت (اختیاری)
 - می‌توانید اسکریپت را به صورت دستی برای تست اجرا کنید:
   ```bash
-  /root/x-ui-warp-endpoint-updater/xui-warp-endpoint-updater.sh
+  /root/xui-warp-endpoint-updater/xui-warp-endpoint-updater.sh
   ```
 
 ---

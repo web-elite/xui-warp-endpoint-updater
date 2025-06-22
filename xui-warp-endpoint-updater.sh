@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Define absolute paths
-LOG_FILE="/var/log/x-ui-update.log"
-INSTALL_DIR="/root/x-ui-warp-endpoint-updater"
+LOG_FILE="/var/log/xui-update.log"
+INSTALL_DIR="/root/xui-warp-endpoint-updater"
 IP_FINDER="$INSTALL_DIR/find-best-ip-endpoint.sh"  # Use absolute path
 DB_PATH="/etc/x-ui/x-ui.db"
 CONFIG_FILE="$INSTALL_DIR/config.conf"

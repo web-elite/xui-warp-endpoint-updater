@@ -54,14 +54,14 @@ This guide provides instructions for installing and configuring the X-UI Warp En
 ### Step 4: Complete Installation
 - The script will:
   - Install required packages (`curl`, `cron`, `sqlite3`, `jq`).
-  - Create the installation directory (`/root/x-ui-warp-endpoint-updater`).
+  - Create the installation directory (`/root/xui-warp-endpoint-updater`).
   - Download the necessary scripts.
   - Make the scripts executable.
 
 ### Step 5: Verify Installation
 - Check the installation directory for the downloaded scripts:
   ```
-  /root/x-ui-warp-endpoint-updater/
+  /root/xui-warp-endpoint-updater/
   ```
 - Verify the cron job is set up correctly:
   ```
@@ -71,7 +71,7 @@ This guide provides instructions for installing and configuring the X-UI Warp En
 ### Step 6: Run the Script Manually (Optional)
 - You can manually run the script to test it:
   ```bash
-  /root/x-ui-warp-endpoint-updater/xui-warp-endpoint-updater.sh
+  /root/xui-warp-endpoint-updater/xui-warp-endpoint-updater.sh
   ```
 
 ---
