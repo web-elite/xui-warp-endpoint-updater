@@ -3,7 +3,7 @@
 # Constants
 SCRIPT_URL="https://raw.githubusercontent.com/web-elite/xui-warp-endpoint-updater/main/find-best-ip-endpoint.sh"
 MAIN_SCRIPT_URL="https://raw.githubusercontent.com/web-elite/xui-warp-endpoint-updater/main/xui-warp-endpoint-updater.sh"
-INSTALL_DIR="/root/x-ui-warp-endpoint-updater"
+INSTALL_DIR="/root/xui-warp-endpoint-updater"
 CONFIG_FILE="$INSTALL_DIR/config.conf"
 SCRIPT_PATH="$INSTALL_DIR/find-best-ip-endpoint.sh"
 MAIN_SCRIPT_PATH="$INSTALL_DIR/xui-warp-endpoint-updater.sh"
