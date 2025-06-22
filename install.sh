@@ -45,7 +45,10 @@ remove_cron_job() {
 
 # Add cron job
 add_cron_job() {
-    (crontab -l 2>/dev/null | grep -v "$MAIN_SCRIPT_PATH"; echo "$1 $MAIN_SCRIPT_PATH") | crontab -
+    (
+        crontab -l 2>/dev/null | grep -v "$MAIN_SCRIPT_PATH"
+        echo "$1 $MAIN_SCRIPT_PATH"
+    ) | crontab -
 }
 
 install_script() {
@@ -58,22 +61,43 @@ install_script() {
     log "Saved outbound names: $warp_outbounds" "$GREEN"
 
     log "Choose how often the script should run:" "$YELLOW"
-    echo -e "${YELLOW}1) Every 6 hours\n2) Every 12 hours\n3) Every 24 hours\n4) Custom (cron format)${NC}"
+    echo -e "${YELLOW}1) Every 1 hour\n2) Every 2 hours\n3) Every 3 hours\n4) Every 6 hours\n5) Every 12 hours\n6) Every 24 hours\n7) Custom (enter number of hours)${NC}"
     read -p "Choice: " choice
 
     case $choice in
-    1) cron_interval="0 */6 * * *" ;;
-    2) cron_interval="0 */12 * * *" ;;
-    3) cron_interval="0 0 * * *" ;; # Every 24 hours at midnight
-    4) read -p "Enter custom cron interval: " cron_interval ;;
-    *) cron_interval="0 */6 * * *"; log "Invalid choice, using default 6h." "$RED" ;;
+    1) cron_interval="0 */1 * * *" ;;
+    2) cron_interval="0 */2 * * *" ;;
+    3) cron_interval="0 */3 * * *" ;;
+    4) cron_interval="0 */6 * * *" ;;
+    5) cron_interval="0 */12 * * *" ;;
+    6) cron_interval="0 */24 * * *" ;;
+    7)
+        read -p "Enter interval in hours (e.g., 1, 3, 5): " custom_hours
+        if [[ "$custom_hours" =~ ^[0-9]+$ ]] && [ "$custom_hours" -ge 1 ] && [ "$custom_hours" -le 23 ]; then
+            cron_interval="0 */$custom_hours * * *"
+        else
+            log "Invalid input. Using default: every 1 hour." "$RED"
+            cron_interval="0 */1 * * *"
+        fi
+        ;;
+    *)
+        cron_interval="0 */6 * * *"
+        log "Invalid choice, using default 6h." "$RED"
+        ;;
     esac
+    log "Cron job will run with interval: $cron_interval" "$GREEN"
 
     remove_cron_job
     add_cron_job "$cron_interval"
 
-    curl -fsSL "$SCRIPT_URL" -o "$SCRIPT_PATH" || { log "Failed to download helper script." "$RED"; exit 1; }
-    curl -fsSL "$MAIN_SCRIPT_URL" -o "$MAIN_SCRIPT_PATH" || { log "Failed to download main script." "$RED"; exit 1; }
+    curl -fsSL "$SCRIPT_URL" -o "$SCRIPT_PATH" || {
+        log "Failed to download helper script." "$RED"
+        exit 1
+    }
+    curl -fsSL "$MAIN_SCRIPT_URL" -o "$MAIN_SCRIPT_PATH" || {
+        log "Failed to download main script." "$RED"
+        exit 1
+    }
 
     chmod +x "$SCRIPT_PATH" "$MAIN_SCRIPT_PATH"
     log "Installation complete." "$GREEN"
@@ -86,8 +110,14 @@ uninstall_script() {
 }
 
 update_script() {
-    curl -fsSL "$SCRIPT_URL" -o "$SCRIPT_PATH" || { log "Failed to update helper script." "$RED"; exit 1; }
-    curl -fsSL "$MAIN_SCRIPT_URL" -o "$MAIN_SCRIPT_PATH" || { log "Failed to update main script." "$RED"; exit 1; }
+    curl -fsSL "$SCRIPT_URL" -o "$SCRIPT_PATH" || {
+        log "Failed to update helper script." "$RED"
+        exit 1
+    }
+    curl -fsSL "$MAIN_SCRIPT_URL" -o "$MAIN_SCRIPT_PATH" || {
+        log "Failed to update main script." "$RED"
+        exit 1
+    }
     chmod +x "$SCRIPT_PATH" "$MAIN_SCRIPT_PATH"
     log "Update complete." "$GREEN"
 }
