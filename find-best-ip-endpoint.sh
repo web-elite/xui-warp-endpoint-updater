@@ -1,5 +1,10 @@
 #!/bin/bash
 
+INSTALL_DIR="/root/xui-warp-endpoint-updater"
+CONFIG_FILE="$INSTALL_DIR/config.conf"
+SCRIPT_PATH="$INSTALL_DIR/find-best-ip-endpoint.sh"
+MAIN_SCRIPT_PATH="$INSTALL_DIR/xui-warp-endpoint-updater.sh"
+
 #colors
 red='\033[0;31m'
 green='\033[0;32m'
@@ -29,13 +34,15 @@ armv7l)
 esac
 
 cfwarpIP() {
-    if [[ ! -f "$PREFIX/bin/warpendpoint" ]]; then
-        echo "Downloading warpendpoint program"
-        if [[ -n $cpu ]]; then
-            curl -L -o warpendpoint -# --retry 2 https://raw.githubusercontent.com/web-elite/xui-warp-endpoint-updater/main/cpu/$cpu
-            cp warpendpoint $PREFIX/bin
-            chmod +x $PREFIX/bin/warpendpoint
-        fi
+    local cpu_file="$INSTALL_DIR/cpu/$cpu"
+
+    if [[ ! -f "$cpu_file" ]]; then
+        echo "Downloading warpendpoint program for CPU: $cpu"
+        mkdir -p "$INSTALL_DIR/cpu"
+        curl -L -o "$cpu_file" -# --retry 2 "https://raw.githubusercontent.com/web-elite/xui-warp-endpoint-updater/main/cpu/$cpu"
+        chmod +x "$cpu_file"
+    else
+        echo "warpendpoint program already exists at $cpu_file"
     fi
 }
 
