@@ -1,9 +1,7 @@
 #!/bin/bash
 
 INSTALL_DIR="/root/xui-warp-endpoint-updater"
-CONFIG_FILE="$INSTALL_DIR/config.conf"
-SCRIPT_PATH="$INSTALL_DIR/find-best-ip-endpoint.sh"
-MAIN_SCRIPT_PATH="$INSTALL_DIR/xui-warp-endpoint-updater.sh"
+FILE="$INSTALL_DIR/result.csv"
 
 #colors
 red='\033[0;31m'
@@ -39,8 +37,9 @@ cfwarpIP() {
     if [[ ! -f "$cpu_file" ]]; then
         echo "Downloading warpendpoint program for CPU: $cpu"
         mkdir -p "$INSTALL_DIR/cpu"
-        curl -L -o "$cpu_file" -# --retry 2 "https://raw.githubusercontent.com/web-elite/xui-warp-endpoint-updater/main/cpu/$cpu"
-        chmod +x "$cpu_file"
+        curl -L -o warpendpoint -# --retry 2 https://raw.githubusercontent.com/web-elite/xui-warp-endpoint-updater/main/cpu/$cpu
+        cp warpendpoint $PREFIX/bin
+        chmod +x $PREFIX/bin/warpendpoint
     else
         echo "warpendpoint program already exists at $cpu_file"
     fi
@@ -143,10 +142,28 @@ endipresult() {
     fi
 
     clear
-    cat result.csv | awk -F, '$3!="timeout ms" {print} ' | sort -t, -nk2 -nk3 | uniq | head -11 | awk -F, '{print "Endpoint "$1" Packet Loss Rate "$2" Average Delay "$3}'
-    Endip_v4=$(cat result.csv | grep -oE "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+:[0-9]+" | head -n 1)
-    Endip_v6=$(cat result.csv | grep -oE "\[.*\]:[0-9]+" | head -n 1)
-    delay=$(cat result.csv | grep -oE "[0-9]+ ms|timeout" | head -n 1)
+    # اگر فایل وجود نداشت، فایل خالی بساز
+    if [[ ! -f "$FILE" ]]; then
+        echo "File $FILE not found! Creating empty file..."
+        >"$FILE"
+    fi
+
+    # ادامه پردازش فقط اگر فایل خالی نباشه
+    if [[ ! -s "$FILE" ]]; then
+        echo "File $FILE is empty. Nothing to process."
+        exit 0
+    fi
+
+    # فیلتر و مرتب‌سازی داده‌ها
+    awk -F, '$3 != "timeout ms"' "$FILE" | sort -t, -nk2 -nk3 | uniq | head -11 |
+        awk -F, '{print "Endpoint " $1 " Packet Loss Rate " $2 " Average Delay " $3}'
+
+    # استخراج اولین IPv4 با پورت
+    Endip_v4=$(grep -oE "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+:[0-9]+" "$FILE" | head -n1)
+    # استخراج اولین IPv6 با پورت
+    Endip_v6=$(grep -oE "\[[0-9a-fA-F:]+\]:[0-9]+" "$FILE" | head -n1)
+    # استخراج اولین مقدار delay یا timeout
+    delay=$(grep -oE "[0-9]+ ms|timeout" "$FILE" | head -n1)
     # echo ""
     # echo -e "${green}Results Saved in result.csv${rest}"
     # echo ""
